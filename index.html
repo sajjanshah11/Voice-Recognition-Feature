@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Recognition Feature - eBook</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Voice Recognition Practice</h1>
+        <div class="search-container">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search words or phrases..."
+            class="search-input"
+          />
+          <button id="searchBtn" class="search-btn">🔍</button>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <!-- Word Selection Area -->
+        <section class="word-section">
+          <h2>Select a Word/Phrase to Practice</h2>
+          <div class="word-grid" id="wordGrid">
+            <!-- Words will be populated dynamically -->
+          </div>
+          <div class="selected-word" id="selectedWord" style="display: none">
+            <h3 id="currentWord"></h3>
+            <p id="currentDefinition"></p>
+          </div>
+        </section>
+
+        <!-- Audio Controls Section -->
+        <section class="audio-section">
+          <div class="audio-controls">
+            <div class="correct-audio">
+              <h3>Correct Pronunciation</h3>
+              <button id="playCorrectBtn" class="audio-btn play-btn" disabled>
+                🔊 Play Correct
+              </button>
+              <audio id="correctAudio" preload="none"></audio>
+            </div>
+
+            <div class="recording-controls">
+              <h3>Your Recording</h3>
+              <button id="recordBtn" class="audio-btn record-btn" disabled>
+                🎤 Start Recording
+              </button>
+              <button id="stopBtn" class="audio-btn stop-btn" disabled>
+                ⏹️ Stop Recording
+              </button>
+              <div class="recording-status" id="recordingStatus"></div>
+            </div>
+          </div>
+
+          <!-- Recordings List -->
+          <div class="recordings-section">
+            <h3>Your Recordings (Max 3)</h3>
+            <div class="recordings-list" id="recordingsList">
+              <p class="no-recordings">
+                No recordings yet. Start by selecting a word and recording your
+                pronunciation.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Feedback Section -->
+        <section class="feedback-section">
+          <div
+            class="feedback-container"
+            id="feedbackContainer"
+            style="display: none"
+          >
+            <h3>Pronunciation Feedback</h3>
+            <div class="feedback-content" id="feedbackContent"></div>
+            <div class="accuracy-score" id="accuracyScore"></div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Help Modal -->
+      <div class="modal" id="helpModal">
+        <div class="modal-content">
+          <span class="close" id="closeModal">&times;</span>
+          <h2>How to Use Voice Recognition</h2>
+          <ol>
+            <li>Select a word or phrase from the grid</li>
+            <li>Listen to the correct pronunciation</li>
+            <li>Record your pronunciation</li>
+            <li>Get instant feedback on accuracy</li>
+            <li>Practice and improve!</li>
+          </ol>
+          <p>
+            <strong>Note:</strong> You can keep up to 3 recordings. Older
+            recordings are automatically deleted.
+          </p>
+        </div>
+      </div>
+
+      <button class="help-btn" id="helpBtn">❓</button>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
