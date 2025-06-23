@@ -7,81 +7,117 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="container">
+    <div class="app-container">
+      <!-- Header -->
       <header class="header">
-        <h1>Voice Recognition Practice</h1>
-        <div class="search-container">
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search words or phrases..."
-            class="search-input"
-          />
-          <button id="searchBtn" class="search-btn">🔍</button>
-        </div>
+        <h1>🎤 Voice Recognition eBook</h1>
+        <p>Practice pronunciation with instant feedback</p>
       </header>
 
-      <main class="main-content">
-        <!-- Word Selection Area -->
-        <section class="word-section">
-          <h2>Select a Word/Phrase to Practice</h2>
-          <div class="word-grid" id="wordGrid">
-            <!-- Words will be populated dynamically -->
-          </div>
-          <div class="selected-word" id="selectedWord" style="display: none">
-            <h3 id="currentWord"></h3>
-            <p id="currentDefinition"></p>
-          </div>
-        </section>
-
-        <!-- Audio Controls Section -->
-        <section class="audio-section">
-          <div class="audio-controls">
-            <div class="correct-audio">
-              <h3>Correct Pronunciation</h3>
-              <button id="playCorrectBtn" class="audio-btn play-btn" disabled>
-                🔊 Play Correct
-              </button>
-              <audio id="correctAudio" preload="none"></audio>
-            </div>
-
-            <div class="recording-controls">
-              <h3>Your Recording</h3>
-              <button id="recordBtn" class="audio-btn record-btn" disabled>
-                🎤 Start Recording
-              </button>
-              <button id="stopBtn" class="audio-btn stop-btn" disabled>
-                ⏹️ Stop Recording
-              </button>
-              <div class="recording-status" id="recordingStatus"></div>
+      <!-- Main Two-Panel Layout -->
+      <div class="main-layout">
+        <!-- Left Panel - Word List -->
+        <div class="left-panel">
+          <div class="panel-header">
+            <h2>📚 Word Library</h2>
+            <div class="search-container">
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="🔍 Search words, definitions, or categories..."
+                class="search-input"
+              />
+              <button id="searchBtn" class="search-btn">🔍</button>
             </div>
           </div>
 
-          <!-- Recordings List -->
-          <div class="recordings-section">
-            <h3>Your Recordings (Max 3)</h3>
-            <div class="recordings-list" id="recordingsList">
-              <p class="no-recordings">
-                No recordings yet. Start by selecting a word and recording your
-                pronunciation.
-              </p>
+          <div class="word-list-container">
+            <div class="word-grid" id="wordGrid">
+              <!-- Words will be populated dynamically -->
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- Feedback Section -->
-        <section class="feedback-section">
-          <div
-            class="feedback-container"
-            id="feedbackContainer"
-            style="display: none"
-          >
-            <h3>Pronunciation Feedback</h3>
-            <div class="feedback-content" id="feedbackContent"></div>
-            <div class="accuracy-score" id="accuracyScore"></div>
+        <!-- Right Panel - Description & Audio Controls -->
+        <div class="right-panel">
+          <div class="panel-content">
+            <!-- Selected Word Display -->
+            <div class="selected-word-section" id="selectedWordSection">
+              <div class="word-info">
+                <h2 id="currentWord">Select a word to practice</h2>
+                <div class="word-details">
+                  <p id="currentDefinition" class="word-definition"></p>
+                  <p id="wordPhonetic" class="word-phonetic"></p>
+                  <div class="word-tags">
+                    <span id="wordCategory" class="category-tag"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Audio Controls and Recordings Row -->
+              <div class="audio-recordings-row">
+                <!-- Audio Controls -->
+                <div class="audio-controls-section">
+                  <h3>🔊 Audio Controls</h3>
+                  <div class="audio-controls">
+                    <button
+                      id="playCorrectBtn"
+                      class="control-btn play-btn"
+                      disabled
+                    >
+                      🔊 Play Correct Pronunciation
+                    </button>
+                    <audio id="correctAudio" preload="none"></audio>
+                  </div>
+
+                  <!-- Recording Controls -->
+                  <div class="recording-controls">
+                    <button
+                      id="recordBtn"
+                      class="control-btn record-btn"
+                      disabled
+                    >
+                      🎤 Start Recording
+                    </button>
+                    <button id="stopBtn" class="control-btn stop-btn" disabled>
+                      ⏹️ Stop Recording
+                    </button>
+                  </div>
+
+                  <!-- Status Display -->
+                  <div class="status-container">
+                    <div id="recordingStatus" class="status-message"></div>
+                  </div>
+                </div>
+
+                <!-- Recordings List -->
+                <div class="recordings-section">
+                  <h3>📼 Your Recordings (Max 3)</h3>
+                  <div class="recordings-list" id="recordingsList">
+                    <p class="no-recordings">
+                      No recordings yet. Start by selecting a word and recording
+                      your pronunciation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feedback Section -->
+              <div class="feedback-section">
+                <div
+                  class="feedback-container"
+                  id="feedbackContainer"
+                  style="display: none"
+                >
+                  <h3>📊 Pronunciation Feedback</h3>
+                  <div class="feedback-content" id="feedbackContent"></div>
+                  <div class="accuracy-score" id="accuracyScore"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
 
       <!-- Help Modal -->
       <div class="modal" id="helpModal">

@@ -141,6 +141,24 @@ const voiceRecognitionData = {
       audioPath: "audio/fascinating.mp3",
       phonetic: "/ˈfæsɪˌneɪtɪŋ/",
     },
+    {
+      id: 16,
+      word: "know",
+      definition: "To be aware of through observation, inquiry, or information",
+      category: "vocabulary",
+      difficulty: "beginner",
+      audioPath: "audio/know.mp3",
+      phonetic: "/noʊ/",
+    },
+    {
+      id: 17,
+      word: "no",
+      definition: "Used to give a negative response",
+      category: "vocabulary",
+      difficulty: "beginner",
+      audioPath: "audio/no.mp3",
+      phonetic: "/noʊ/",
+    },
   ],
 
   // Phrases for advanced practice

@@ -128,13 +128,10 @@ class VoiceRecognitionApp {
     card.dataset.id = item.id;
 
     const text = item.word || item.phrase;
-    const difficulty =
-      item.difficulty.charAt(0).toUpperCase() + item.difficulty.slice(1);
 
     card.innerHTML = `
             <h4>${text}</h4>
             <p>${item.phonetic}</p>
-            <small>${difficulty} • ${item.category}</small>
         `;
 
     card.addEventListener("click", () => this.selectItem(item));
@@ -165,6 +162,12 @@ class VoiceRecognitionApp {
   selectItem(item) {
     this.currentItem = item;
 
+    // Remove initial state styling
+    const wordInfo = document.querySelector(".word-info");
+    if (wordInfo) {
+      wordInfo.classList.remove("initial-state");
+    }
+
     // Update UI to show selected word
     document.querySelectorAll(".word-card").forEach((card) => {
       card.classList.remove("selected");
@@ -174,16 +177,38 @@ class VoiceRecognitionApp {
     });
 
     // Show selected word details
-    const selectedWordDiv = document.getElementById("selectedWord");
     const currentWordSpan = document.getElementById("currentWord");
     const currentDefinitionP = document.getElementById("currentDefinition");
+    const phoneticElement = document.getElementById("wordPhonetic");
+    const categoryElement = document.getElementById("wordCategory");
+    const difficultyElement = document.getElementById("wordDifficulty");
 
+    // Update main word display
     const text = item.word || item.phrase;
-    currentWordSpan.textContent = `${text} ${item.phonetic}`;
+    currentWordSpan.textContent = text;
     currentDefinitionP.textContent = item.definition;
 
-    selectedWordDiv.style.display = "block";
-    selectedWordDiv.classList.add("fade-in");
+    // Update additional details
+    if (phoneticElement && item.phonetic) {
+      phoneticElement.textContent = `${item.phonetic}`;
+      phoneticElement.style.display = "block";
+    } else if (phoneticElement) {
+      phoneticElement.style.display = "none";
+    }
+
+    if (categoryElement && item.category) {
+      categoryElement.textContent = item.category;
+      categoryElement.style.display = "inline-block";
+    } else if (categoryElement) {
+      categoryElement.style.display = "none";
+    }
+
+    if (difficultyElement && item.difficulty) {
+      difficultyElement.textContent = item.difficulty;
+      difficultyElement.style.display = "inline-block";
+    } else if (difficultyElement) {
+      difficultyElement.style.display = "none";
+    }
 
     // Enable audio controls
     document.getElementById("playCorrectBtn").disabled = false;
@@ -240,7 +265,6 @@ class VoiceRecognitionApp {
     try {
       // Clear previous results
       this.lastSpeechRecognitionResult = null;
-      this.clearPreviousFeedback();
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -456,7 +480,7 @@ class VoiceRecognitionApp {
       wordId: this.currentItem.id,
       audioUrl: audioUrl,
       audioBlob: audioBlob,
-      timestamp: new Date().toLocaleString(),
+      timestamp: Date.now(), // Store as milliseconds since epoch for reliable parsing
       duration: this.audioChunks.length,
     };
 
@@ -496,7 +520,7 @@ class VoiceRecognitionApp {
     }
   }
 
-  // Generate pronunciation feedback (REAL ANALYSIS)
+  // Generate pronunciation feedback and store it within the recording
   async generateFeedback(recording) {
     console.log(`🎯 Generating feedback for recording of "${recording.word}"`);
     console.log(`   Recording ID: ${recording.id}`);
@@ -505,54 +529,45 @@ class VoiceRecognitionApp {
     );
 
     try {
-      // Method 1: Web Speech Recognition API
-      const speechRecognitionScore = await this.analyzeSpeechRecognition(
-        recording
-      );
+      // Get speech recognition result
+      let recognizedText = "N/A";
+      let textMatchScore = 0;
 
-      // Method 2: Audio Analysis (waveform, duration, etc.)
-      const audioAnalysisScore = this.analyzeAudioCharacteristics(recording);
-
-      // Method 3: Phonetic Pattern Analysis
-      const phoneticScore = this.analyzePhoneticPatterns(recording);
-
-      // Combine all analysis methods for final score
-      const accuracy = this.calculateFinalAccuracy(
-        speechRecognitionScore,
-        audioAnalysisScore,
-        phoneticScore
-      );
-
-      const thresholds = DataHelper.getConfig("accuracyThresholds");
-
-      let feedbackLevel, feedbackMessage, feedbackClass;
-
-      if (accuracy >= thresholds.excellent) {
-        feedbackLevel = "excellent";
-        feedbackClass = "excellent";
-      } else if (accuracy >= thresholds.good) {
-        feedbackLevel = "good";
-        feedbackClass = "good";
+      if (this.lastSpeechRecognitionResult) {
+        recognizedText = this.lastSpeechRecognitionResult.recognizedText;
+        textMatchScore = this.lastSpeechRecognitionResult.score;
       } else {
-        feedbackLevel = "needsImprovement";
-        feedbackClass = "needs-improvement";
+        // Fallback analysis
+        textMatchScore = this.fallbackSpeechAnalysis(recording);
+        recognizedText = "Speech recognition not available";
       }
 
-      feedbackMessage = DataHelper.getPrompt(`feedback.${feedbackLevel}`);
+      // Store feedback data within the recording
+      recording.feedback = {
+        expected: recording.word,
+        recognized: recognizedText,
+        textMatch: textMatchScore,
+      };
 
-      // Display feedback with detailed analysis
-      this.displayDetailedFeedback(accuracy, feedbackMessage, feedbackClass, {
-        speechRecognition: speechRecognitionScore,
-        audioAnalysis: audioAnalysisScore,
-        phonetic: phoneticScore,
-      });
+      // Update the recording in the recordings array
+      const recordingIndex = this.recordings.findIndex(
+        (r) => r.id === recording.id
+      );
+      if (recordingIndex !== -1) {
+        this.recordings[recordingIndex] = recording;
+      }
+
+      // Update recordings display to show feedback
+      this.updateRecordingsDisplay();
     } catch (error) {
       console.error("Error generating feedback:", error);
-      // Fallback to basic analysis if advanced methods fail
-      const basicAccuracy = this.basicPronunciationAnalysis(recording);
-      const feedbackMessage =
-        "Analysis completed with basic method. Consider using a supported browser for detailed feedback.";
-      this.displayFeedback(basicAccuracy, feedbackMessage, "good");
+      // Store basic feedback even on error
+      recording.feedback = {
+        expected: recording.word,
+        recognized: "Error in analysis",
+        textMatch: 0,
+      };
+      this.updateRecordingsDisplay();
     }
   }
 
@@ -1022,177 +1037,56 @@ class VoiceRecognitionApp {
   }
 
   // Display detailed feedback with breakdown
-  displayDetailedFeedback(accuracy, message, className, analysisBreakdown) {
-    const feedbackContainer = document.getElementById("feedbackContainer");
-    const feedbackContent = document.getElementById("feedbackContent");
-    const accuracyScore = document.getElementById("accuracyScore");
-
-    console.log(
-      `🎉 Displaying feedback: ${accuracy}% for word "${
-        this.currentItem?.word || this.currentItem?.phrase
-      }"`
-    );
-
-    // Reset animation class to ensure it triggers for each new feedback
-    feedbackContainer.classList.remove("slide-up", "fade-in");
-
-    // Force reflow to ensure class removal takes effect
-    feedbackContainer.offsetHeight;
-
-    // Create speech-to-text comparison and detailed breakdown
-    let speechToTextHtml = "";
-    if (this.lastSpeechRecognitionResult) {
-      const result = this.lastSpeechRecognitionResult;
-      speechToTextHtml = `
-        <div class="speech-to-text-section">
-          <h4>🎯 Speech Recognition Results:</h4>
-          <div class="text-comparison">
-            <div class="expected-text">
-              <strong>Expected:</strong> <span class="expected">"${
-                result.expectedText
-              }"</span>
-            </div>
-            <div class="recognized-text">
-              <strong>You said:</strong> <span class="recognized">"${
-                result.recognizedText
-              }"</span>
-            </div>
-            <div class="match-score">
-              <strong>Text Match:</strong> <span class="match">${Math.round(
-                result.similarity * 100
-              )}%</span>
-            </div>
-          </div>
-        </div>
-      `;
-    } else {
-      speechToTextHtml = `
-        <div class="speech-to-text-section">
-          <h4>🎯 Speech Recognition:</h4>
-          <div class="text-comparison">
-            <div class="no-recognition">
-              <em>Real-time speech recognition not available - using audio analysis instead</em>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    const breakdownHtml = `
-      ${speechToTextHtml}
-      <div class="analysis-breakdown">
-        <h4>📊 Scoring Breakdown for "${
-          this.currentItem?.word || this.currentItem?.phrase
-        }":</h4>
-        <div class="breakdown-item">
-          <span>🎤 Speech Recognition:</span> <strong>${Math.round(
-            analysisBreakdown.speechRecognition
-          )}%</strong>
-        </div>
-        <div class="breakdown-item">
-          <span>🎵 Audio Quality:</span> <strong>${Math.round(
-            analysisBreakdown.audioAnalysis
-          )}%</strong>
-        </div>
-        <div class="breakdown-item">
-          <span>📝 Phonetic Analysis:</span> <strong>${Math.round(
-            analysisBreakdown.phonetic
-          )}%</strong>
-        </div>
-      </div>
-    `;
-
-    // Update content
-    feedbackContent.innerHTML = `${message}<br><br>${breakdownHtml}`;
-    accuracyScore.textContent = `Overall Accuracy: ${accuracy}%`;
-    accuracyScore.className = `accuracy-score ${className}`;
-
-    // Show container and trigger animation
-    feedbackContainer.style.display = "block";
-
-    // Use setTimeout to ensure the animation triggers
-    setTimeout(() => {
-      feedbackContainer.classList.add("slide-up");
-    }, 10);
-
-    // Add pronunciation tips for lower scores
-    if (accuracy < 70) {
-      const tips = DataHelper.getTips();
-      const randomTips = tips.sort(() => 0.5 - Math.random()).slice(0, 3);
-
-      const tipsHtml =
-        "<br><strong>Tips for improvement:</strong><ul>" +
-        randomTips.map((tip) => `<li>${tip}</li>`).join("") +
-        "</ul>";
-
-      feedbackContent.innerHTML += tipsHtml;
-    }
-
-    // Scroll feedback into view
-    feedbackContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
-
-  // Clear previous feedback before new recording
-  clearPreviousFeedback() {
-    const feedbackContainer = document.getElementById("feedbackContainer");
-    if (feedbackContainer) {
-      console.log("🧹 Clearing previous feedback for new recording");
-      feedbackContainer.style.display = "none";
-      feedbackContainer.classList.remove("slide-up", "fade-in");
-    }
-  }
-
-  // Display basic feedback (fallback method)
-  displayFeedback(accuracy, message, className) {
-    const feedbackContainer = document.getElementById("feedbackContainer");
-    const feedbackContent = document.getElementById("feedbackContent");
-    const accuracyScore = document.getElementById("accuracyScore");
-
-    console.log(
-      `🎉 Displaying basic feedback: ${accuracy}% for word "${
-        this.currentItem?.word || this.currentItem?.phrase
-      }"`
-    );
-
-    // Reset animation class to ensure it triggers for each new feedback
-    feedbackContainer.classList.remove("slide-up", "fade-in");
-
-    // Force reflow to ensure class removal takes effect
-    feedbackContainer.offsetHeight;
-
-    // Update content
-    feedbackContent.innerHTML = `${message}<br><br><em>Using basic analysis method.</em>`;
-    accuracyScore.textContent = `Overall Accuracy: ${accuracy}%`;
-    accuracyScore.className = `accuracy-score ${className}`;
-
-    // Show container and trigger animation
-    feedbackContainer.style.display = "block";
-
-    // Use setTimeout to ensure the animation triggers
-    setTimeout(() => {
-      feedbackContainer.classList.add("slide-up");
-    }, 10);
-
-    // Scroll feedback into view
-    feedbackContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
 
   // Update recordings display
   updateRecordingsDisplay() {
     const recordingsList = document.getElementById("recordingsList");
+    const recordingsSection = document.querySelector(".recordings-section");
+
+    // Update the header with current count
+    const header = recordingsSection.querySelector("h3");
+    const maxRecordings = DataHelper.getConfig("maxRecordings");
+    const currentCount = this.recordings.length;
+
+    // Update header text with progress
+    header.innerHTML = `📼 Your Recordings (${currentCount}/${maxRecordings}) <span class="recording-indicator"></span>`;
 
     if (this.recordings.length === 0) {
-      recordingsList.innerHTML =
-        '<p class="no-recordings">No recordings yet. Start by selecting a word and recording your pronunciation.</p>';
+      if (this.currentItem) {
+        // Show enhanced empty state when a word is selected
+        recordingsList.innerHTML = `
+          <div class="no-recordings">
+            <div class="empty-state-icon">🎤</div>
+            <p><strong>Ready to record!</strong></p>
+            <p>Click the record button to capture your pronunciation of "<em>${this.currentItem.word}</em>"</p>
+          </div>
+        `;
+      } else {
+        // Show tips when no word is selected
+        this.showInitialTips();
+      }
       return;
     }
 
+    // Clear the list (no progress indicator needed)
     recordingsList.innerHTML = "";
 
+    // Add each recording with staggered animation
     this.recordings.forEach((recording, index) => {
       const recordingItem = this.createRecordingItem(recording, index);
       recordingsList.appendChild(recordingItem);
     });
+  }
+
+  // Convert percentage score to descriptive feedback
+  getQualityFeedback(score) {
+    if (score >= 75) {
+      return "Excellent";
+    } else if (score >= 50) {
+      return "Good";
+    } else {
+      return "Bad";
+    }
   }
 
   // Create recording item element
@@ -1200,22 +1094,106 @@ class VoiceRecognitionApp {
     const item = document.createElement("div");
     item.className = "recording-item";
 
+    // Add entrance animation
+    item.style.opacity = "0";
+    item.style.transform = "translateY(10px)";
+
+    // Create feedback section if feedback is available
+    let feedbackHTML = "";
+    if (recording.feedback) {
+      const qualityFeedback = this.getQualityFeedback(
+        recording.feedback.textMatch
+      );
+      const qualityClass = qualityFeedback.toLowerCase();
+      feedbackHTML = `
+        <div class="recording-feedback">
+          <div class="feedback-item">
+            <span class="feedback-label">Expected:</span>
+            <span class="feedback-value" data-type="expected">${recording.feedback.expected}</span>
+          </div>
+          <div class="feedback-item">
+            <span class="feedback-label">You said:</span>
+            <span class="feedback-value" data-type="recognized">${recording.feedback.recognized}</span>
+          </div>
+          <div class="feedback-item">
+            <span class="feedback-label">Quality:</span>
+            <span class="feedback-value ${qualityClass}" data-type="match">${qualityFeedback}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Format timestamp to be more readable
+    const formattedTime = this.formatTimestamp(recording.timestamp);
+
     item.innerHTML = `
-            <div class="recording-info">
-                <div class="recording-word">${recording.word}</div>
-                <div class="recording-time">${recording.timestamp}</div>
+            <div class="recording-header">
+                <div class="recording-info">
+                    <div class="recording-word">${recording.word}</div>
+                    <div class="recording-time">${formattedTime}</div>
+                </div>
+                <div class="recording-controls">
+                    <button class="play-recording-btn" onclick="app.playRecording(${recording.id})" title="Play recording">
+                        ▶️ Play
+                    </button>
+                    <button class="delete-recording-btn" onclick="app.deleteRecording(${recording.id})" title="Delete recording">
+                        🗑️ Delete
+                    </button>
+                </div>
             </div>
-            <div class="recording-controls">
-                <button class="play-recording-btn" onclick="app.playRecording(${recording.id})">
-                    ▶️ Play
-                </button>
-                <button class="delete-recording-btn" onclick="app.deleteRecording(${recording.id})">
-                    🗑️ Delete
-                </button>
-            </div>
+            ${feedbackHTML}
         `;
 
+    // Animate entrance
+    setTimeout(() => {
+      item.style.transition = "all 0.3s ease";
+      item.style.opacity = "1";
+      item.style.transform = "translateY(0)";
+    }, index * 100); // Stagger animation
+
     return item;
+  }
+
+  // Format timestamp to be more user-friendly
+  formatTimestamp(timestamp) {
+    let date;
+
+    // Handle different timestamp formats
+    if (typeof timestamp === "number") {
+      date = new Date(timestamp);
+    } else if (typeof timestamp === "string") {
+      date = new Date(timestamp);
+    } else {
+      // Fallback for invalid timestamps
+      return "Unknown time";
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Unknown time";
+    }
+
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+
+    if (diffInMinutes < 1) {
+      return "Just now";
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    } else if (diffInMinutes < 1440) {
+      // Less than 24 hours
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours}h ago`;
+    } else {
+      // For dates older than 24 hours, show a more readable format
+      const options = {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      };
+      return date.toLocaleDateString("en-US", options);
+    }
   }
 
   // Play a specific recording
@@ -1290,6 +1268,65 @@ class VoiceRecognitionApp {
   // Show welcome message
   showWelcomeMessage() {
     this.showStatus(DataHelper.getPrompt("welcome"));
+    this.resetToInitialState();
+  }
+
+  // Reset UI to initial state when no word is selected
+  resetToInitialState() {
+    // Reset word display
+    document.getElementById("currentWord").textContent =
+      "Select a word to practice";
+    document.getElementById("currentDefinition").textContent =
+      "Choose any word from the list on the left to begin your pronunciation practice journey.";
+
+    // Hide phonetic and tag elements
+    const phoneticElement = document.getElementById("wordPhonetic");
+    const categoryElement = document.getElementById("wordCategory");
+    const difficultyElement = document.getElementById("wordDifficulty");
+
+    if (phoneticElement) phoneticElement.style.display = "none";
+    if (categoryElement) categoryElement.style.display = "none";
+    if (difficultyElement) difficultyElement.style.display = "none";
+
+    // Disable audio controls
+    document.getElementById("playCorrectBtn").disabled = true;
+    document.getElementById("recordBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = true;
+
+    // Add helpful instruction message
+    this.showStatus(
+      "👈 Select a word from the library to start practicing!",
+      "instruction"
+    );
+
+    // Add initial state class to word info section
+    const wordInfo = document.querySelector(".word-info");
+    if (wordInfo) {
+      wordInfo.classList.add("initial-state");
+    }
+
+    // Show helpful tips in the recordings section
+    this.showInitialTips();
+  }
+
+  // Show helpful tips when no word is selected
+  showInitialTips() {
+    const recordingsList = document.getElementById("recordingsList");
+    if (recordingsList) {
+      recordingsList.innerHTML = `
+        <div class="initial-tips">
+          <h4>💡 How to get started:</h4>
+          <ul>
+            <li>🔍 Use the search box to find specific words</li>
+            <li>📚 Browse by category (vocabulary, adjectives, etc.)</li>
+            <li>🎯 Start with beginner level words</li>
+            <li>🔊 Listen to pronunciation before recording</li>
+            <li>🎤 Record yourself multiple times for practice</li>
+          </ul>
+          <p class="tip-note">✨ <strong>Pro tip:</strong> Use headphones for better audio quality!</p>
+        </div>
+      `;
+    }
   }
 
   // Show help modal
