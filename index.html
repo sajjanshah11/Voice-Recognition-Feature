@@ -79,9 +79,6 @@
                     >
                       🎤 Start Recording
                     </button>
-                    <button id="stopBtn" class="control-btn stop-btn" disabled>
-                      ⏹️ Stop Recording
-                    </button>
                   </div>
 
                   <!-- Status Display -->
@@ -93,11 +90,24 @@
                 <!-- Recordings List -->
                 <div class="recordings-section">
                   <h3>📼 Your Recordings (Max 3)</h3>
-                  <div class="recordings-list" id="recordingsList">
-                    <p class="no-recordings">
-                      No recordings yet. Start by selecting a word and recording
-                      your pronunciation.
-                    </p>
+                  <div class="recordings-table-container">
+                    <table class="recordings-table" id="recordingsTable">
+                      <thead>
+                        <tr>
+                          <th>Recording</th>
+                          <th>Quality</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="recordingsTableBody">
+                        <tr class="no-recordings-row">
+                          <td colspan="3">
+                            No recordings yet. Start by selecting a word and
+                            recording your pronunciation.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>

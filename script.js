@@ -77,12 +77,11 @@ class VoiceRecognitionApp {
     document
       .getElementById("playCorrectBtn")
       .addEventListener("click", () => this.playCorrectAudio());
+
+    // Combined record/stop button
     document
       .getElementById("recordBtn")
-      .addEventListener("click", () => this.startRecording());
-    document
-      .getElementById("stopBtn")
-      .addEventListener("click", () => this.stopRecording());
+      .addEventListener("click", () => this.toggleRecording());
 
     // Help modal
     document
@@ -212,7 +211,9 @@ class VoiceRecognitionApp {
 
     // Enable audio controls
     document.getElementById("playCorrectBtn").disabled = false;
-    document.getElementById("recordBtn").disabled = false;
+    const recordBtn = document.getElementById("recordBtn");
+    recordBtn.disabled = false;
+    recordBtn.innerHTML = "🎤 Start Recording";
 
     // Show instruction
     this.showStatus(DataHelper.getPrompt("listenFirst"));
@@ -299,10 +300,10 @@ class VoiceRecognitionApp {
 
       this.mediaRecorder.start();
 
-      // Update UI
-      document.getElementById("recordBtn").disabled = true;
-      document.getElementById("recordBtn").classList.add("recording");
-      document.getElementById("stopBtn").disabled = false;
+      // Update UI for combined button
+      const recordBtn = document.getElementById("recordBtn");
+      recordBtn.innerHTML = "⏹️ Stop Recording";
+      recordBtn.classList.add("recording");
 
       this.showStatus(
         "🎤 Recording & analyzing speech... Speak clearly!",
@@ -454,10 +455,10 @@ class VoiceRecognitionApp {
     // Stop all tracks
     this.mediaRecorder.stream.getTracks().forEach((track) => track.stop());
 
-    // Update UI
-    document.getElementById("recordBtn").disabled = false;
-    document.getElementById("recordBtn").classList.remove("recording");
-    document.getElementById("stopBtn").disabled = true;
+    // Update UI for combined button
+    const recordBtn = document.getElementById("recordBtn");
+    recordBtn.innerHTML = "🎤 Start Recording";
+    recordBtn.classList.remove("recording");
 
     this.showStatus(
       "Recording complete! Analyzing pronunciation... (no automatic playback)",
@@ -1038,9 +1039,9 @@ class VoiceRecognitionApp {
 
   // Display detailed feedback with breakdown
 
-  // Update recordings display
+  // Update recordings display in table format
   updateRecordingsDisplay() {
-    const recordingsList = document.getElementById("recordingsList");
+    const recordingsTableBody = document.getElementById("recordingsTableBody");
     const recordingsSection = document.querySelector(".recordings-section");
 
     // Update the header with current count
@@ -1052,29 +1053,30 @@ class VoiceRecognitionApp {
     header.innerHTML = `📼 Your Recordings (${currentCount}/${maxRecordings}) <span class="recording-indicator"></span>`;
 
     if (this.recordings.length === 0) {
-      if (this.currentItem) {
-        // Show enhanced empty state when a word is selected
-        recordingsList.innerHTML = `
-          <div class="no-recordings">
-            <div class="empty-state-icon">🎤</div>
-            <p><strong>Ready to record!</strong></p>
-            <p>Click the record button to capture your pronunciation of "<em>${this.currentItem.word}</em>"</p>
-          </div>
-        `;
-      } else {
-        // Show tips when no word is selected
-        this.showInitialTips();
-      }
+      // Show empty state in table
+      recordingsTableBody.innerHTML = `
+        <tr class="no-recordings-row">
+          <td colspan="3">
+            ${
+              this.currentItem
+                ? `Ready to record! Click the record button to capture your pronunciation of "${
+                    this.currentItem.word || this.currentItem.phrase
+                  }"`
+                : "No recordings yet. Start by selecting a word and recording your pronunciation."
+            }
+          </td>
+        </tr>
+      `;
       return;
     }
 
-    // Clear the list (no progress indicator needed)
-    recordingsList.innerHTML = "";
+    // Clear the table body
+    recordingsTableBody.innerHTML = "";
 
-    // Add each recording with staggered animation
+    // Add each recording as a table row
     this.recordings.forEach((recording, index) => {
-      const recordingItem = this.createRecordingItem(recording, index);
-      recordingsList.appendChild(recordingItem);
+      const recordingRow = this.createRecordingTableRow(recording, index);
+      recordingsTableBody.appendChild(recordingRow);
     });
   }
 
@@ -1089,69 +1091,59 @@ class VoiceRecognitionApp {
     }
   }
 
-  // Create recording item element
-  createRecordingItem(recording, index) {
-    const item = document.createElement("div");
-    item.className = "recording-item";
+  // Create recording table row element
+  createRecordingTableRow(recording, index) {
+    const row = document.createElement("tr");
+    row.className = "recording-row";
 
-    // Add entrance animation
-    item.style.opacity = "0";
-    item.style.transform = "translateY(10px)";
-
-    // Create feedback section if feedback is available
-    let feedbackHTML = "";
+    // Get quality feedback
+    let qualityFeedback = "Unknown";
+    let qualityClass = "";
     if (recording.feedback) {
-      const qualityFeedback = this.getQualityFeedback(
-        recording.feedback.textMatch
-      );
-      const qualityClass = qualityFeedback.toLowerCase();
-      feedbackHTML = `
-        <div class="recording-feedback">
-          <div class="feedback-item">
-            <span class="feedback-label">Expected:</span>
-            <span class="feedback-value" data-type="expected">${recording.feedback.expected}</span>
-          </div>
-          <div class="feedback-item">
-            <span class="feedback-label">You said:</span>
-            <span class="feedback-value" data-type="recognized">${recording.feedback.recognized}</span>
-          </div>
-          <div class="feedback-item">
-            <span class="feedback-label">Quality:</span>
-            <span class="feedback-value ${qualityClass}" data-type="match">${qualityFeedback}</span>
-          </div>
-        </div>
-      `;
+      qualityFeedback = this.getQualityFeedback(recording.feedback.textMatch);
+      qualityClass = qualityFeedback.toLowerCase();
     }
 
-    // Format timestamp to be more readable
-    const formattedTime = this.formatTimestamp(recording.timestamp);
+    // Format recording name
+    const recordingName = `Recording ${index + 1}`;
+    const wordText = recording.word || "Unknown";
 
-    item.innerHTML = `
-            <div class="recording-header">
-                <div class="recording-info">
-                    <div class="recording-word">${recording.word}</div>
-                    <div class="recording-time">${formattedTime}</div>
-                </div>
-                <div class="recording-controls">
-                    <button class="play-recording-btn" onclick="app.playRecording(${recording.id})" title="Play recording">
-                        ▶️ Play
-                    </button>
-                    <button class="delete-recording-btn" onclick="app.deleteRecording(${recording.id})" title="Delete recording">
-                        🗑️ Delete
-                    </button>
-                </div>
-            </div>
-            ${feedbackHTML}
-        `;
+    row.innerHTML = `
+      <td>
+        <div class="recording-name">${recordingName}</div>
+        <div style="font-size: 12px; color: #666; margin-top: 2px;">${wordText}</div>
+      </td>
+      <td>
+        <span class="recording-quality ${qualityClass}">${qualityFeedback}</span>
+      </td>
+      <td>
+        <div class="recording-actions">
+          <button class="action-btn play-action-btn" onclick="app.playRecording(${recording.id})" title="Play recording">
+            ▶️ Play
+          </button>
+          <button class="action-btn delete-action-btn" onclick="app.deleteRecording(${recording.id})" title="Delete recording">
+            🗑️ Delete
+          </button>
+        </div>
+      </td>
+    `;
 
-    // Animate entrance
+    // Add entrance animation
+    row.style.opacity = "0";
+    row.style.transform = "translateY(10px)";
+
     setTimeout(() => {
-      item.style.transition = "all 0.3s ease";
-      item.style.opacity = "1";
-      item.style.transform = "translateY(0)";
-    }, index * 100); // Stagger animation
+      row.style.transition = "all 0.3s ease";
+      row.style.opacity = "1";
+      row.style.transform = "translateY(0)";
+    }, index * 100);
 
-    return item;
+    return row;
+  }
+
+  // Legacy method for backwards compatibility
+  createRecordingItem(recording, index) {
+    return this.createRecordingTableRow(recording, index);
   }
 
   // Format timestamp to be more user-friendly
@@ -1360,6 +1352,17 @@ class VoiceRecognitionApp {
     // Escape to close modal
     if (event.code === "Escape") {
       this.hideHelpModal();
+    }
+  }
+
+  // Toggle recording
+  toggleRecording() {
+    if (this.currentItem) {
+      if (this.isRecording) {
+        this.stopRecording();
+      } else {
+        this.startRecording();
+      }
     }
   }
 }

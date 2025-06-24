@@ -61,7 +61,10 @@ body {
 .word-list-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Right Panel - Description & Controls */
@@ -325,21 +328,40 @@ body {
 }
 
 .record-btn {
-  background: linear-gradient(135deg, #ff7043, #ff5722);
+  background: linear-gradient(135deg, #ff5722, #d84315);
   color: white;
-  border: 3px solid #ff5722;
+  min-width: 200px;
+  font-weight: 700;
+  transition: all 0.3s ease;
 }
 
 .record-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ff5722, #e64a19);
+  background: linear-gradient(135deg, #d84315, #bf360c);
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
 }
 
 .record-btn.recording {
-  background: linear-gradient(135deg, #e91e63, #c2185b);
-  animation: educational-pulse 1.5s infinite;
-  border-color: #c2185b;
+  background: linear-gradient(135deg, #f44336, #c62828);
+  animation: recording-pulse 1.5s infinite;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
+}
+
+.record-btn.recording:hover {
+  background: linear-gradient(135deg, #c62828, #b71c1c);
+  transform: translateY(-2px);
+}
+
+@keyframes recording-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(244, 67, 54, 0.8);
+    transform: scale(1.02);
+  }
 }
 
 .stop-btn {
@@ -402,25 +424,27 @@ body {
 /* Word Grid in Left Panel */
 .word-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Word Card Styles for Left Panel - Educational Theme */
 .word-card {
-  background: linear-gradient(135deg, #29b6f6, #0288d1);
-  color: white;
-  padding: 16px 20px;
-  border-radius: 18px;
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border: 2px solid #ffb74d;
+  border-radius: 15px;
+  padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-align: left;
-  border: 3px solid transparent;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 4px 15px rgba(41, 182, 246, 0.3);
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(255, 183, 77, 0.2);
+  animation: fadeIn 0.5s ease;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .word-card:hover {
@@ -1508,4 +1532,279 @@ body {
 
 .recording-feedback .feedback-value.bad::after {
   background: #dc2626;
+}
+
+/* Recordings Table Styles */
+.recordings-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 15px;
+  background: #f8fdff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid #81d4fa;
+}
+
+.recordings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Comic Sans MS", cursive;
+  background: white;
+}
+
+.recordings-table thead {
+  background: linear-gradient(135deg, #29b6f6, #0288d1);
+  color: white;
+}
+
+.recordings-table th {
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 14px;
+  border-bottom: 2px solid #81d4fa;
+}
+
+.recordings-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e1f5fe;
+  vertical-align: middle;
+}
+
+.recordings-table tbody tr:hover {
+  background: #f0f9ff;
+}
+
+.no-recordings-row td {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 30px 20px;
+}
+
+.recording-name {
+  font-weight: 600;
+  color: #0277bd;
+}
+
+.recording-quality {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.recording-quality.excellent {
+  background: #4caf50;
+  color: white;
+}
+
+.recording-quality.good {
+  background: #ff9800;
+  color: white;
+}
+
+.recording-quality.bad {
+  background: #f44336;
+  color: white;
+}
+
+.recording-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: "Comic Sans MS", cursive;
+}
+
+.play-action-btn {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+}
+
+.play-action-btn:hover {
+  background: linear-gradient(135deg, #45a049, #3d8b40);
+  transform: translateY(-2px);
+}
+
+.delete-action-btn {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+}
+
+.delete-action-btn:hover {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  transform: translateY(-2px);
+}
+
+/* Remove old recordings list styles */
+.recordings-list {
+  display: none;
+}
+
+/* Enhanced Mobile and Tablet Responsive Design */
+@media (max-width: 1200px) {
+  .audio-recordings-row {
+    flex-direction: column;
+  }
+
+  .audio-controls-section {
+    flex: none;
+  }
+
+  .recordings-section {
+    flex: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .left-panel {
+    flex: 0 0 250px;
+    padding: 15px;
+  }
+
+  .right-panel {
+    flex: 1;
+    padding: 15px;
+  }
+
+  .audio-recordings-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .audio-controls,
+  .recording-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .control-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .word-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .recordings-table {
+    font-size: 12px;
+  }
+
+  .recordings-table th,
+  .recordings-table td {
+    padding: 8px 6px;
+  }
+
+  .recording-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .word-info {
+    padding: 15px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .word-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .search-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-input,
+  .search-btn {
+    width: 100%;
+  }
+
+  .control-btn {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .audio-controls-section {
+    padding: 15px;
+  }
+
+  .word-info {
+    padding: 12px;
+  }
+
+  .recordings-table-container {
+    overflow-x: scroll;
+  }
+
+  .recordings-table {
+    min-width: 300px;
+  }
+}
+
+/* Tablet landscape orientation */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .main-layout {
+    flex-direction: row;
+  }
+
+  .left-panel {
+    flex: 0 0 350px;
+  }
+
+  .right-panel {
+    flex: 1;
+  }
+
+  .audio-recordings-row {
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .word-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
 }
