@@ -43,6 +43,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 280px; /* Ensure minimum width for word visibility */
 }
 
 .panel-header {
@@ -92,8 +93,9 @@ body {
   }
 
   .left-panel {
-    flex: 0 0 300px;
+    flex: 0 0 400px;
     min-height: 0;
+    max-height: 50vh;
   }
 
   .right-panel {
@@ -424,7 +426,7 @@ body {
 /* Word Grid in Left Panel */
 .word-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 2px;
   width: 100%;
@@ -1092,8 +1094,8 @@ body {
   }
 
   .word-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
   .recording-item {
@@ -1166,7 +1168,8 @@ body {
   }
 
   .word-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .search-container {
@@ -1682,8 +1685,15 @@ body {
   }
 
   .left-panel {
-    flex: 0 0 250px;
+    flex: 0 0 350px;
     padding: 15px;
+    min-width: 280px;
+    max-height: 45vh;
+  }
+
+  .word-list-container {
+    max-height: calc(45vh - 120px);
+    overflow-y: auto;
   }
 
   .right-panel {
@@ -1737,6 +1747,23 @@ body {
     padding: 15px;
   }
 
+  .word-info h2 {
+    font-size: 1.6rem;
+  }
+
+  .word-definition {
+    font-size: 1rem;
+  }
+
+  .word-phonetic {
+    font-size: 0.95rem;
+    padding: 6px 12px;
+  }
+
+  .audio-controls-section h3 {
+    font-size: 1.2rem;
+  }
+
   .modal-content {
     padding: 20px;
     margin: 10px;
@@ -1749,8 +1776,23 @@ body {
   }
 
   .word-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+
+  .word-card {
+    padding: 12px;
+    min-height: 80px;
+  }
+
+  .word-card h4 {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .word-card p {
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
 
   .search-container {
@@ -1776,12 +1818,132 @@ body {
     padding: 12px;
   }
 
+  .word-info h2 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+  }
+
+  .word-definition {
+    font-size: 0.9rem;
+    margin: 8px 0;
+  }
+
+  .word-phonetic {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    margin: 8px 0;
+  }
+
+  .category-tag,
+  .difficulty-tag {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+
+  .audio-controls-section h3 {
+    font-size: 1.1rem;
+  }
+
   .recordings-table-container {
     overflow-x: scroll;
   }
 
   .recordings-table {
     min-width: 300px;
+  }
+}
+
+/* Medium small mobile screens */
+@media (max-width: 425px) {
+  .word-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .word-definition {
+    font-size: 0.87rem;
+    line-height: 1.4;
+  }
+
+  .word-phonetic {
+    font-size: 0.82rem;
+    padding: 5px 10px;
+  }
+
+  .category-tag,
+  .difficulty-tag {
+    font-size: 0.77rem;
+    padding: 5px 10px;
+  }
+
+  .audio-controls-section h3 {
+    font-size: 1.05rem;
+  }
+}
+
+/* Very small mobile screens */
+@media (max-width: 375px) {
+  .left-panel {
+    padding: 12px;
+  }
+
+  .word-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .word-card {
+    padding: 10px;
+    min-height: 75px;
+  }
+
+  .word-card h4 {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
+
+  .word-card p {
+    font-size: 0.75rem;
+  }
+
+  .panel-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .search-input {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .search-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .word-info h2 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .word-definition {
+    font-size: 0.85rem;
+    margin: 6px 0;
+  }
+
+  .word-phonetic {
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    margin: 6px 0;
+  }
+
+  .category-tag,
+  .difficulty-tag {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+
+  .audio-controls-section h3 {
+    font-size: 1rem;
   }
 }
 
