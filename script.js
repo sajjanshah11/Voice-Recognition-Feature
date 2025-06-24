@@ -16,30 +16,117 @@ class VoiceRecognitionApp {
 
   async init() {
     try {
-      await this.checkBrowserSupport();
-      await this.requestMicrophoneAccess();
+      // Always setup basic functionality first
       this.setupEventListeners();
       this.loadWordGrid();
+
+      // Check browser support (non-blocking)
+      await this.checkBrowserSupport();
+
+      // Request microphone access (non-blocking)
+      await this.requestMicrophoneAccess();
+
+      // Show welcome message
       this.showWelcomeMessage();
     } catch (error) {
       console.error("Initialization error:", error);
-      this.showError(DataHelper.getPrompt("browserNotSupported"));
+      // Still show welcome message even if there are issues
+      this.showWelcomeMessage();
+      this.showStatus(
+        "App loaded with limited functionality. Some features may not be available.",
+        "info"
+      );
     }
   }
 
   // Check if browser supports required features
   async checkBrowserSupport() {
+    // Check for basic API support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error("Browser does not support media recording");
+      console.warn("MediaDevices API not supported");
+      this.showBrowserCompatibilityInfo();
+      return; // Don't throw error, just show info
     }
 
     if (!window.MediaRecorder) {
-      throw new Error("MediaRecorder not supported");
+      console.warn("MediaRecorder API not supported");
+      this.showBrowserCompatibilityInfo();
+      return; // Don't throw error, just show info
+    }
+
+    // Check if we're running in a secure context (HTTPS or localhost)
+    if (!window.isSecureContext) {
+      console.warn(
+        "Insecure context detected - microphone access may be limited"
+      );
+      this.showSecurityInfo();
+      return;
+    }
+  }
+
+  // Show helpful browser compatibility information
+  showBrowserCompatibilityInfo() {
+    const message = `
+      <div style="text-align: left;">
+        <h3>Voice Recording Not Available</h3>
+        <p>This could be due to:</p>
+        <ul>
+          <li>Your browser doesn't support voice recording APIs</li>
+          <li>The page is not served over HTTPS</li>
+          <li>Microphone permissions are blocked</li>
+        </ul>
+        <p><strong>You can still:</strong></p>
+        <ul>
+          <li>Browse and search words</li>
+          <li>Listen to correct pronunciations</li>
+          <li>Study phonetic transcriptions</li>
+        </ul>
+        <p><em>For voice recording, try Chrome, Firefox, or Safari on HTTPS.</em></p>
+      </div>
+    `;
+
+    this.showStatus(message, "info");
+    this.disableRecordingFeatures();
+  }
+
+  // Show security context information
+  showSecurityInfo() {
+    const message = `
+      <div style="text-align: left;">
+        <h3>Secure Connection Required</h3>
+        <p>Voice recording requires a secure connection (HTTPS) for privacy and security.</p>
+        <p><strong>You can still use:</strong></p>
+        <ul>
+          <li>Word browsing and search</li>
+          <li>Audio pronunciation playback</li>
+          <li>Phonetic transcriptions</li>
+        </ul>
+      </div>
+    `;
+
+    this.showStatus(message, "warning");
+    this.disableRecordingFeatures();
+  }
+
+  // Disable recording features but keep other functionality
+  disableRecordingFeatures() {
+    const recordBtn = document.getElementById("recordBtn");
+    if (recordBtn) {
+      recordBtn.disabled = true;
+      recordBtn.innerHTML = "🎤 Recording Not Available";
+      recordBtn.title =
+        "Voice recording is not available in this browser/context";
     }
   }
 
   // Request microphone access
   async requestMicrophoneAccess() {
+    // Skip if browser doesn't support media devices
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.log("Skipping microphone access - API not supported");
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -55,9 +142,53 @@ class VoiceRecognitionApp {
       console.log("Microphone access granted");
     } catch (error) {
       console.error("Microphone access denied:", error);
-      this.showError(DataHelper.getPrompt("noMicrophone"));
-      throw error;
+      this.showMicrophoneAccessInfo(error);
+      // Don't throw error - let the app continue without recording
     }
+  }
+
+  // Show microphone access information
+  showMicrophoneAccessInfo(error) {
+    let message = "";
+
+    if (error.name === "NotAllowedError") {
+      message = `
+        <div style="text-align: left;">
+          <h3>Microphone Access Denied</h3>
+          <p>To enable voice recording:</p>
+          <ul>
+            <li>Click the microphone icon in your browser's address bar</li>
+            <li>Select "Always allow" for this site</li>
+            <li>Refresh the page</li>
+          </ul>
+          <p><strong>You can still use all other features!</strong></p>
+        </div>
+      `;
+    } else if (error.name === "NotFoundError") {
+      message = `
+        <div style="text-align: left;">
+          <h3>No Microphone Found</h3>
+          <p>Please connect a microphone to use voice recording features.</p>
+          <p><strong>All other features are available!</strong></p>
+        </div>
+      `;
+    } else {
+      message = `
+        <div style="text-align: left;">
+          <h3>Microphone Access Issue</h3>
+          <p>Unable to access microphone. This could be due to:</p>
+          <ul>
+            <li>Browser permissions</li>
+            <li>Privacy settings</li>
+            <li>Other applications using the microphone</li>
+          </ul>
+          <p><strong>You can still browse words and listen to pronunciations!</strong></p>
+        </div>
+      `;
+    }
+
+    this.showStatus(message, "warning");
+    this.disableRecordingFeatures();
   }
 
   // Setup all event listeners
